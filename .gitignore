@@ -164,3 +164,4 @@ cython_debug/
 
 # client specific data
 /Template
+/output
