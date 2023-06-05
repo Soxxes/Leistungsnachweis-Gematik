@@ -63,4 +63,28 @@ def handle_failed_input():
     input("Please change your column names (you can copy and paste them) and re-run the program.\n"\
           + "Press any key to exit ...")
     sys.exit()
-    
+
+def select_client(config: dict):
+    clients = list(config.keys())
+    client_map = {i: dirname for i, dirname in enumerate(clients, 1)}
+    print(f"Found {len(clients)} clients in config file.")
+    for i, client in client_map.items():
+        print(f"{i} - {client}")
+
+    for _ in range(3):
+        choice = input("\nSelect client: ")
+        try:
+            client = client_map[int(choice)]
+        except ValueError:
+            print("[WARNING] Please provide a number.\n")
+            continue
+        except KeyError:
+            print("[WARNING] Please choose one of the numbers displayed. \n")
+            continue
+        else:
+            break
+    else:
+        input("Received three invalid inputs. Script termintates. Please press any key ...")
+        sys.exit()
+
+    return client

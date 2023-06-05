@@ -2,33 +2,22 @@ import calendar
 from datetime import datetime, date
 
 import pandas as pd
-import numpy as np
 
 
 class Report:
 
     def __init__(self, group: pd.DataFrame, month: int, year: int,
-                 employee_name: str, project_name: str):
+                 employee_name: str, project_name: str,
+                 references: dict, header: dict):
         self.group = group
         self.month = month
         self.year = year
         self.employee_name = employee_name
         self.project_name = project_name
 
-        self.references = {
-            #          row, column
-            "weekday": [12, 4], # D12
-            "date": [12, 5], # E12
-            "hours": [12, 7], # G12
-            "description": [12, 14] # aka comment, N12
-        }
-
-        self.header_references = {
-            "Mitarbeiter": "G3",
-            "Projekt": "G5",
-            "Berichtsmonat": "G7",
-            "Datum": "G8"
-        }
+        # cell references in the template and output file
+        self.references = references
+        self.header_references = header
 
     def get_report_date(self) -> str:
         return f"{calendar.month_name[self.month]} {self.year}"
@@ -100,26 +89,26 @@ class Report:
         comments = self.get_comment_by_date(code_to_activity, additional_comments)
         for i in range(0, len(weekdays)):
             sheet.cell(
-                row=self.references["weekday"][0] + i,
-                column=self.references["weekday"][1],
+                row=self.references["weekday"][0][0] + i,
+                column=self.references["weekday"][0][1],
                 value=weekdays[i]
             )
             sheet.cell(
-                row=self.references["date"][0] + i,
-                column=self.references["date"][1],
+                row=self.references["date"][0][0] + i,
+                column=self.references["date"][0][1],
                 value=dates[i]
             )
             if dates[i] in hours.keys():
                 # same row as in dates can be used
                 sheet.cell(
-                    row=self.references["date"][0] + i,
-                    column=self.references["hours"][1],
+                    row=self.references["date"][0][0] + i,
+                    column=self.references["hours"][0][1],
                     value=hours.get(dates[i])
                 )
             if dates[i] in comments.keys():
                 # same row as in dates can be used
                 sheet.cell(
-                    row=self.references["date"][0] + i,
-                    column=self.references["description"][1],
+                    row=self.references["date"][0][0] + i,
+                    column=self.references["description"][0][1],
                     value=comments.get(dates[i])
                 )

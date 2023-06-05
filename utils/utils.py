@@ -1,6 +1,7 @@
 import os
 import sys
 import openpyxl
+import json
 
 
 def create_folder(name, path_to_go=None):
@@ -15,12 +16,27 @@ def create_folder(name, path_to_go=None):
         os.chdir(name)
 
 # path should be os pathlike object
-def load_template(path):
+def load_template(path, client, config):
     try:
         template = openpyxl.load_workbook(path)
-        return template
+        skip_style = config.get(client).get("skip_style")
+        if not skip_style:
+            template_sheet = template[config.get(client).get("template_sheet_name")]
+        else:
+            template_sheet = None
+        return template, template_sheet, skip_style
     except FileNotFoundError:
         print("[ERROR] No template file found. Please provide a template file for your 'Leistungsnachweis'.")
         print("Please create a folder 'Template' with a 'template.xlsx' file inside.")
+        input("Aborting. Press any key to exit ...")
+        sys.exit()
+
+def load_config(path):
+    try:
+        with open(path, "r") as file:
+            config = json.load(file)
+        return config
+    except FileNotFoundError:
+        print("[ERROR] Missing config file in template folder.")
         input("Aborting. Press any key to exit ...")
         sys.exit()
