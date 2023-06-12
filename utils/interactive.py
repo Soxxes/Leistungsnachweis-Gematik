@@ -81,54 +81,73 @@ def handle_failed_input():
     sys.exit()
 
 def select_client(config: dict):
-    clients = list(config.get("Clients").keys())
-    client_map = {i: dirname for i, dirname in enumerate(clients, 1)}
-    print(f"Found {len(clients)} clients in config file.")
-    for i, client in client_map.items():
-        print(f"{i} - {client}")
+    try:
+        clients = list(config.get("Clients").keys())
+        client_map = {i: dirname for i, dirname in enumerate(clients, 1)}
+        print(f"Found {len(clients)} clients in config file.")
+        for i, client in client_map.items():
+            print(f"{i} - {client}")
 
-    for _ in range(3):
-        choice = input("\nSelect client: ")
-        try:
-            client = client_map[int(choice)]
-        except ValueError:
-            print("[WARNING] Please provide a number.\n")
-            continue
-        except KeyError:
-            print("[WARNING] Please choose one of the numbers displayed. \n")
-            continue
+        for _ in range(3):
+            choice = input("\nSelect client: ")
+            logging.info(f"User's choice in 'select_client' function: {choice}")
+            try:
+                client = client_map[int(choice)]
+            except ValueError:
+                print("[WARNING] Please provide a number.\n")
+                continue
+            except KeyError:
+                print("[WARNING] Please choose one of the numbers displayed. \n")
+                continue
+            else:
+                break
         else:
-            break
-    else:
-        input("Received three invalid inputs. Script termintates. Please press any key ...")
+            logging.warning("User entered three invald inputs. Script terminates.")
+            input("Received three invalid inputs. Script termintates. Please press any key ...")
+            sys.exit()
+
+        client_info = config.get("Clients").get(client)
+        logging.info("Successfully selected client.")
+        return client, client_info
+    
+    except Exception as e:
+        logging.info("Error in 'select_client' function. Terminated with error:")
+        logging.error(f"{e}")
         sys.exit()
 
-    client_info = config.get("Clients").get(client)
-    return client, client_info
-
 def handle_no_tasks(no_tasks: pd.DataFrame) -> None:
-    print(f"Found {len(no_tasks)} entries without any task name.")
-    print("Note, that these entries won't be included in the 'Stundenaufstellung'.")
-    export = input("Would you like to export them in a separate excel file? (y/n) ")
-    for _ in range(3):
-        if export == "y":
-            wb = openpyxl.Workbook()
-            ws = wb.active
-            # add header
-            ws.append(column_names)
-            for _, row in no_tasks.iterrows():
-                ws.append(row.tolist())
-            wb.save("no_tasks.xlsx")
-            print("\nNew file created: 'no_tasks.xlsx'")
-            print("However, I recommend adding tasks to your original Replicon Export.")
-            print("Then, you can re-run the program to include all entries.")
-            return
-        elif export == "n":
-            return
+    try:
+        print(f"Found {len(no_tasks)} entries without any task name.")
+        print("Note, that these entries won't be included in the 'Stundenaufstellung'.")
+        for _ in range(3):
+            export = input("Would you like to export them in a separate excel file? (y/n) ")
+            logging.info(f"User's choice in 'handle_no_tasks' function: {export}")
+            if export == "y":
+                wb = openpyxl.Workbook()
+                ws = wb.active
+                # add header
+                ws.append(column_names)
+                for _, row in no_tasks.iterrows():
+                    ws.append(row.tolist())
+                wb.save("no_tasks.xlsx")
+                print("\nNew file created: 'no_tasks.xlsx'")
+                print("However, I recommend adding tasks to your original Replicon Export.")
+                print("Then, you can re-run the program to include all entries.")
+                logging.info("Successfully handled no task entries.")
+                return
+            elif export == "n":
+                logging.info("Successfully handled no task entries.")
+                return
+            else:
+                print(f"'{export}' is not a valid input. Please select 'y' for 'yes' and 'n' for 'no'.")
         else:
-            print(f"'{export}' is not a valid input. Please select 'y' for 'yes' and 'n' for 'no'.")
-    else:
-        input("Received three invalid inputs. Script termintates. Please press any key ...")
+            logging.warning("User entered three invald inputs. Script terminates.")
+            input("Received three invalid inputs. Script termintates. Please press any key ...")
+            sys.exit()
+
+    except Exception as e:
+        logging.info("Error in 'handle_no_tasks' function. Terminated with error:")
+        logging.error(f"{e}")
         sys.exit()
 
 def handle_unexpected_error(error):
