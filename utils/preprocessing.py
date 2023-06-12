@@ -6,8 +6,9 @@ def prepare_df(file):
     # skipfooter -> skip last n rows
     df = pd.read_excel(file, skipfooter=1)
     df = df.replace("< None >", np.NaN)
+    df["Task Name"].replace(r'^\s*$', np.NaN, regex=True, inplace=True)
     # client relevant data
-    df = df.dropna()
+    df = df.dropna(subset=["Client Name"])
     # transform to real datetime object
     df["Entry Date"] = df["Entry Date"].apply(lambda x: pd.to_datetime(x, format="%Y-%m-%d"))
     return df
