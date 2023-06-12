@@ -1,3 +1,4 @@
+import logging
 import openpyxl
 
 
@@ -9,4 +10,5 @@ def validate_input_file(file):
     if sheet["A1"].value != "Entry Date":
         raise TypeError
     # may be extended for further validation
+    logging.info("Sucessfully validated input file.")
     

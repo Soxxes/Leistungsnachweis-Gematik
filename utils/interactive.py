@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 
 import openpyxl
 import pandas as pd
@@ -14,46 +15,56 @@ column_names = [
 
 
 def get_input(cwd):
-    dirs = os.listdir(cwd)
-    # check if there are mutiple Replicon Exports in the current directory
-    count = 0
-    for fname in dirs:
-        if "Timesheet Hours" in fname:
-            count += 1
-            _fname = fname
-    # if not, choose the one
-    if count == 1:
-        file = _fname
-    # if multiple, let user choose
-    elif count > 1:
-        replicon_files = [dirname for dirname in dirs if "Timesheet Hours" in dirname]
-        file_map = {i: dirname for i, dirname in enumerate(replicon_files, 1)}
-        print("Found the following Replicon Exports:")
-        for i, dirname in file_map.items():
-            print(f"{i} - {dirname}")
+    try:
+        dirs = os.listdir(cwd)
+        # check if there are mutiple Replicon Exports in the current directory
+        count = 0
+        for fname in dirs:
+            if "Timesheet Hours" in fname:
+                count += 1
+                _fname = fname
+        # if not, choose the one
+        if count == 1:
+            file = _fname
+        # if multiple, let user choose
+        elif count > 1:
+            replicon_files = [dirname for dirname in dirs if "Timesheet Hours" in dirname]
+            file_map = {i: dirname for i, dirname in enumerate(replicon_files, 1)}
+            print("Found the following Replicon Exports:")
+            for i, dirname in file_map.items():
+                print(f"{i} - {dirname}")
 
-        for _ in range(3):
-            choice = input("\nSelect your file: ")
-            try:
-                file = file_map[int(choice)]
-            except ValueError:
-                print("[WARNING] Please provide a number.\n")
-                continue
-            except KeyError:
-                print("[WARNING] Please choose one of the numbers displayed. \n")
-                continue
+            for _ in range(3):
+                choice = input("\nSelect your file: ")
+                logging.info(f"User's choice in 'get_input' function: {choice}")
+                try:
+                    file = file_map[int(choice)]
+                except ValueError:
+                    print("[WARNING] Please provide a number.\n")
+                    continue
+                except KeyError:
+                    print("[WARNING] Please choose one of the numbers displayed. \n")
+                    continue
+                else:
+                    break
             else:
-                break
+                logging.warning("User entered three invald inputs. Script terminates.")
+                input("Received three invalid inputs. Script termintates. Please press any key ...")
+                sys.exit()
+
+        # if none, exit
         else:
-            input("Received three invalid inputs. Script termintates. Please press any key ...")
+            logging.warning("No Replicon Export provided. Script terminates.")
+            input("No Replicon Export found. Press any key to exit ...")
             sys.exit()
 
-    # if none, exit
-    else:
-        input("No Replicon Export found. Press any key to exit ...")
-        sys.exit()
+        logging.info("Successfully selected input file.")
+        return file
 
-    return file
+    except Exception as e:
+        logging.info("Error in 'get_input' function. Terminated with error:")
+        logging.error(f"{e}")
+        sys.exit()
 
 def handle_failed_input():
     print("Ops ... Seems like your Replicon Export has column names in a different language than English.")
@@ -66,6 +77,7 @@ def handle_failed_input():
     print("There should be a file named 'column_names.xlsx' with the correct column names.")
     input("Please change your column names (you can copy and paste them) and re-run the program.\n"\
           + "Press any key to exit ...")
+    logging.warning("Script terminates. But correct column names were given to the user.")
     sys.exit()
 
 def select_client(config: dict):
@@ -118,3 +130,11 @@ def handle_no_tasks(no_tasks: pd.DataFrame) -> None:
     else:
         input("Received three invalid inputs. Script termintates. Please press any key ...")
         sys.exit()
+
+def handle_unexpected_error(error):
+    logging.info("Unexpected error in logic section. Terminated with error:")
+    logging.error(f"{error}")
+    print("[ERROR] Something unexpected happened.")
+    print("[ERROR] Please, contact the developers and send them the log file.")
+    input("[ERROR] Script terminates. Press any key to exit ...")
+    sys.exit()

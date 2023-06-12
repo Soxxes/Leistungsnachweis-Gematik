@@ -1,19 +1,25 @@
 import os
 import sys
-import openpyxl
 import yaml
+import logging
+
+import openpyxl
 
 
-def create_folder(name, path_to_go=None):
+def create_folder(name, path=None):
     try:
         os.mkdir(name)
+        logging.info(f"Created new folder {name}.")
     except FileExistsError:
+        logging.info(f"Skipped folder creation of folder '{name}' since it already exists.")
         pass
     # change back to working directory
-    if path_to_go is not None:
-        os.chdir(path_to_go)
+    if path is not None:
+        os.chdir(path)
+        logging.info(f"Changed directory to: '{path}'.")
     else:
         os.chdir(name)
+        logging.info(f"Changed directory to: '{name}'.")
 
 # path should be os pathlike object
 def load_template(path, client, config):
