@@ -1,15 +1,42 @@
 import calendar
 from datetime import datetime, date
+from abc import ABC, abstractmethod
 
 import pandas as pd
 
+"""
+IMPORTANT:
+since there must not be any information about a client, I use a mapping
+like this: ClientReport + <id>
+the client id can be found in the config file and should never be exposed
+"""
 
-class Report:
+class Report(ABC):
 
-    def __init__(self, group: pd.DataFrame, month: int, year: int,
-                 employee_name: str, project_name: str,
-                 references: dict, header: dict):
+    def __init__(self,
+                 group: pd.DataFrame):
         self.group = group
+
+    @abstractmethod
+    def fill_header(self, *args, **kwargs) -> None:
+        pass
+
+    @abstractmethod
+    def fill_worksheet(self, *args, **kwargs) -> None:
+        pass
+
+
+class ClientReport1:
+
+    def __init__(self,
+                 group: pd.DataFrame,
+                 month: int,
+                 year: int,
+                 employee_name: str,
+                 project_name: str,
+                 references: dict,
+                 header_references: dict):
+        super(Report, self).__init__(group)
         self.month = month
         self.year = year
         self.employee_name = employee_name
@@ -17,10 +44,12 @@ class Report:
 
         # cell references in the template and output file
         self.references = references if references else None
-        self.header_references = header if header else None
+        self.header_references = header_references if header_references else None
 
     def get_report_date(self) -> str:
-        return f"{calendar.month_name[self.month]} {self.year}"
+        if self.month and self.year:
+            return f"{calendar.month_name[self.month]} {self.year}"
+        raise Exception("No month or year (or both not) provided.")
     
     def get_weekdays_to_dates(self) -> tuple[list[str], list[str]]:
         cal = calendar.monthcalendar(self.year, self.month)
@@ -49,7 +78,7 @@ class Report:
                 # print(f"[WARNING] {self.employee_name} booked multiple times on same date: {date}")
                 d[date] += hours
         return d
-    
+
     # code_to_activity should consists of a mapping from a code, e.g. "001", to
     # a specific activity, e.g. "Gematik-Abstimmung"
     # additional_comments is a list of exceptions for the codes where the actual comment
@@ -113,3 +142,44 @@ class Report:
                     column=self.references["description"][1],
                     value=comments.get(dates[i])
                 )
+
+
+class ClientReport2(Report):
+
+    def __init__(self,
+                 group: pd.DataFrame,
+                 task_name: str,
+                 grades: dict,
+                 header_references: dict):
+        super().__init__(group)
+
+        self.task_name = task_name
+        self.grades = grades
+        self.header_references = header_references
+
+    def fill_header(self, sheet) -> None:
+        ref = self.header_references[self.task_name]
+        sheet[ref] = self.group["Hours"].sum()
+
+    def fill_worksheet(self, sheet, code_to_activity, additional_comments) -> None:
+        for _, row in self.group.iterrows():
+            date = row["Entry Date"]
+            employee_name = row["First Name"] + " " + row["Last Name"]
+            grade = self.grades[employee_name]
+            hours = row["Hours"]
+
+            comment = self._get_comment(row["Comments"], code_to_activity, additional_comments)
+            
+            info = [grade, date, hours, comment]
+            sheet.append(info)
+
+    def _get_comment(self, raw_comment, code_to_activity, additional_comments) -> str:
+        comment = raw_comment
+        for code, activity in code_to_activity.items():
+            if code in comment:
+                # only if the code is not in the additional comments list
+                # replace the comment by the code
+                if code not in additional_comments:
+                    comment = activity
+                break
+        return comment

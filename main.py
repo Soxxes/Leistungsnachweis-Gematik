@@ -9,7 +9,7 @@ import openpyxl
 
 from utils.interactive import get_input, handle_failed_input, select_client
 from utils.preprocessing import prepare_df, clean_name
-from utils.report import Report
+from utils.report import ClientReport1, ClientReport2
 from utils.style import adjust_cell_dimensions, copy_cell_styles, merge_cells
 from utils.validation import validate_input_file
 from utils.utils import create_folder, load_template, load_config
@@ -36,7 +36,7 @@ CODE_TO_ACTIVITY = {
 }
 # codes where the user wants store additional information (comments, the text after a ':')
 # after the corresponding code
-ADDITIONAL_COMMENTS = config["Categories"].get("ADDITIONAL_COMMENTS_FOR_CODES")
+ADDITIONAL_COMMENTS = config["Categories"].get("additional_comments_for_codes")
 
 client, client_info = select_client(config)
 file = get_input(cwd)
@@ -112,7 +112,7 @@ if __name__ == "__main__":
                             merge_cells(employee_sheet, template_merged_cells)
                             copy_cell_styles(template_sheet, employee_sheet)
                             adjust_cell_dimensions(employee_sheet, template_cell_dimensions)
-                            report = Report(employee_group,
+                            report = ClientReport1(employee_group,
                                             month,
                                             year,
                                             f"{first_name} {employee}",
@@ -133,14 +133,25 @@ if __name__ == "__main__":
                 shutil.copy(os.path.join(cwd,
                                         "Template", f"template_{client}.xlsx"),
                                         f"{client}_Stundenaufstellung.xlsx")
+                output_excel = openpyxl.load_workbook(f"{client}_Stundenaufstellung.xlsx")
                 
+                wbs_group.dropna(subset=["Task Name"], inplace=True)
+
                 task_name_groups = wbs_group.groupby(wbs_group["Task Name"])
                 for task_name, task_name_group in task_name_groups:
                     # TODO: nach task names unterscheiden und Stunden nach Datum für
                     # jeden MA eintragen, später mit Grade ersetzen
-                    ...
-                # for index, row in wbs_group.iterrows():
-                #     print(row["Entry Date"])
+                    task_name = task_name.split()[0]
+                    task_name = client_info.get("additional_tasks").get(task_name, task_name)
+                    task_sheet = output_excel[task_name]
+                    report = ClientReport2(task_name_group,
+                                           task_name=task_name,
+                                           grades=config.get("Grades"),
+                                           header_references=client_info.get("header_references"))
+                    report.fill_worksheet(task_sheet, CODE_TO_ACTIVITY, ADDITIONAL_COMMENTS)
+                    report.fill_header(output_excel["Uebersicht"])
+                
+                output_excel.save(f"{client}_Stundenaufstellung.xlsx")
 
         os.chdir("..")
         print(f"Progress: {round((i/len(client_groups))*100, 2)} %", end="\r")
