@@ -33,7 +33,7 @@ def load_template(path, client, config):
 
 def load_config(path):
     try:
-        with open(path, "r") as ymlfile:
+        with open(path, "r", encoding="utf-8") as ymlfile:
             config = yaml.load(ymlfile, Loader=yaml.SafeLoader)
         return config
     except FileNotFoundError:
