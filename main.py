@@ -6,6 +6,7 @@ import string
 import locale
 
 import openpyxl
+import pandas as pd
 
 from utils.interactive import get_input, handle_failed_input, select_client
 from utils.preprocessing import prepare_df, clean_name
@@ -113,12 +114,12 @@ if __name__ == "__main__":
                             copy_cell_styles(template_sheet, employee_sheet)
                             adjust_cell_dimensions(employee_sheet, template_cell_dimensions)
                             report = ClientReport1(employee_group,
-                                            month,
-                                            year,
-                                            f"{first_name} {employee}",
-                                            clean_project_name,
-                                            client_info.get("references"),
-                                            client_info.get("header_references"))
+                                                month=month,
+                                                year=year,
+                                                employee_name=f"{first_name} {employee}",
+                                                project_name=clean_project_name,
+                                                references=client_info.get("references"),
+                                                header_references=client_info.get("header_references"))
                             report.fill_worksheet(employee_sheet, CODE_TO_ACTIVITY, ADDITIONAL_COMMENTS)
                             report.fill_header(employee_sheet)
 
@@ -129,6 +130,7 @@ if __name__ == "__main__":
                 os.chdir("..")
             # -- END CLIENT 1 --
 
+            # -- START CLIENT 2 --
             elif client_info.get("id") == 2:
                 shutil.copy(os.path.join(cwd,
                                         "Template", f"template_{client}.xlsx"),
@@ -138,11 +140,23 @@ if __name__ == "__main__":
                 wbs_group.dropna(subset=["Task Name"], inplace=True)
 
                 task_name_groups = wbs_group.groupby(wbs_group["Task Name"])
+                merged_groups = {}
                 for task_name, task_name_group in task_name_groups:
-                    # TODO: nach task names unterscheiden und Stunden nach Datum für
-                    # jeden MA eintragen, später mit Grade ersetzen
                     task_name = task_name.split()[0]
-                    task_name = client_info.get("additional_tasks").get(task_name, task_name)
+                    if task_name in client_info.get("additional_tasks").keys():
+                        task_name = client_info.get("additional_tasks").get(task_name)
+                    if merged_groups.get(task_name) is None:
+                        merged_groups[task_name] = []
+                    merged_groups[task_name].append(task_name_group)
+                        
+                # groups is list of groups and will be replaced by one merged group for
+                # the corresponding mapped task
+                for task_name, groups in merged_groups.items():
+                    task_name_group = pd.concat(groups)
+                    task_name_group.sort_values("Entry Date", inplace=True)
+                    merged_groups[task_name] = task_name_group
+
+                for task_name, task_name_group in merged_groups.items():
                     task_sheet = output_excel[task_name]
                     report = ClientReport2(task_name_group,
                                            task_name=task_name,
@@ -152,6 +166,7 @@ if __name__ == "__main__":
                     report.fill_header(output_excel["Uebersicht"])
                 
                 output_excel.save(f"{client}_Stundenaufstellung.xlsx")
+                # -- END CLIENT 2 --
 
         os.chdir("..")
         print(f"Progress: {round((i/len(client_groups))*100, 2)} %", end="\r")
