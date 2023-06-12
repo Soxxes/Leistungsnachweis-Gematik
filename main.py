@@ -29,6 +29,8 @@ config = load_config(os.path.join(cwd, "Template", "config.yaml"))
 # set up logging
 logs_dir = config.get("logging").get("logs_dir", "logs")
 log_level = config.get("logging").get("level", "info").upper()
+os.makedirs(logs_dir, exist_ok=True)
+
 log_file = os.path.join(logs_dir, "log_file.log")
 logging.basicConfig(level=log_level, format="%(asctime)s [%(levelname)s] %(message)s",
                     filename=log_file)
