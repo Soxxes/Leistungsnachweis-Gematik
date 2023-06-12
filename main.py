@@ -6,8 +6,9 @@ import string
 import locale
 
 import openpyxl
+import pandas as pd
 
-from utils.interactive import get_input, handle_failed_input, select_client
+from utils.interactive import get_input, handle_failed_input, select_client, handle_no_tasks
 from utils.preprocessing import prepare_df, clean_name, merge_groups
 from utils.report import ClientReport1, ClientReport2
 from utils.style import adjust_cell_dimensions, copy_cell_styles, merge_cells
@@ -137,6 +138,9 @@ if __name__ == "__main__":
                                         f"{client}_Stundenaufstellung.xlsx")
                 output_excel = openpyxl.load_workbook(f"{client}_Stundenaufstellung.xlsx")
                 
+                no_tasks = wbs_group[pd.isna(wbs_group["Task Name"])]
+                handle_no_tasks(no_tasks)
+
                 wbs_group.dropna(subset=["Task Name"], inplace=True)
 
                 task_name_groups = wbs_group.groupby(wbs_group["Task Name"])

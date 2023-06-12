@@ -1,6 +1,16 @@
 import os
 import sys
+
 import openpyxl
+import pandas as pd
+
+
+column_names = [
+        "Entry Date", "First Name",	"Last Name", "Email", "Client Name", "Client Code",
+        "Project Name",	"Project Code",	"Task Name", "Task Code", "Hours", "Comments",
+        "Supervisor Name (Current)", "Time Off Type", "Work Type (AUT)", "Work Type (DEU)",
+        "Work Type (CHE)", "Work Location", "Time Entry Approval Status", "Timesheet Approval Status"
+    ]
 
 
 def get_input(cwd):
@@ -48,12 +58,6 @@ def get_input(cwd):
 def handle_failed_input():
     print("Ops ... Seems like your Replicon Export has column names in a different language than English.")
     print("You can fix that by exporting your timesheet again or rename the column names.\n")
-    column_names = [
-        "Entry Date", "First Name",	"Last Name", "Email", "Client Name", "Client Code",
-        "Project Name",	"Project Code",	"Task Name", "Task Code", "Hours", "Comments",
-        "Supervisor Name (Current)", "Time Off Type", "Work Type (AUT)", "Work Type (DEU)",
-        "Work Type (CHE)", "Work Location", "Time Entry Approval Status", "Timesheet Approval Status"
-    ]
     column_names_wb = openpyxl.Workbook()
     column_names_ws = column_names_wb.active
     for col, name in enumerate(column_names, 1):
@@ -89,3 +93,28 @@ def select_client(config: dict):
 
     client_info = config.get("Clients").get(client)
     return client, client_info
+
+def handle_no_tasks(no_tasks: pd.DataFrame) -> None:
+    print(f"Found {len(no_tasks)} entries without any task name.")
+    print("Note, that these entries won't be included in the 'Stundenaufstellung'.")
+    export = input("Would you like to export them in a separate excel file? (y/n) ")
+    for _ in range(3):
+        if export == "y":
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            # add header
+            ws.append(column_names)
+            for _, row in no_tasks.iterrows():
+                ws.append(row.tolist())
+            wb.save("no_tasks.xlsx")
+            print("\nNew file created: 'no_tasks.xlsx'")
+            print("However, I recommend adding tasks to your original Replicon Export.")
+            print("Then, you can re-run the program to include all entries.")
+            return
+        elif export == "n":
+            return
+        else:
+            print(f"'{export}' is not a valid input. Please select 'y' for 'yes' and 'n' for 'no'.")
+    else:
+        input("Received three invalid inputs. Script termintates. Please press any key ...")
+        sys.exit()
