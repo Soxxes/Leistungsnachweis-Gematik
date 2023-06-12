@@ -16,8 +16,8 @@ class Report:
         self.project_name = project_name
 
         # cell references in the template and output file
-        self.references = references
-        self.header_references = header
+        self.references = references if references else None
+        self.header_references = header if header else None
 
     def get_report_date(self) -> str:
         return f"{calendar.month_name[self.month]} {self.year}"
@@ -77,10 +77,11 @@ class Report:
     
     # sheet is openpyxl worksheet
     def fill_header(self, sheet):
-        sheet[self.header_references["Mitarbeiter"]] = self.employee_name
-        sheet[self.header_references["Projekt"]] = self.project_name
-        sheet[self.header_references["Berichtsmonat"]] = self.get_report_date()
-        sheet[self.header_references["Datum"]] = date.today().strftime("%d.%m.%Y")
+        if self.header_references is not None:
+            sheet[self.header_references["Mitarbeiter"]] = self.employee_name
+            sheet[self.header_references["Projekt"]] = self.project_name
+            sheet[self.header_references["Berichtsmonat"]] = self.get_report_date()
+            sheet[self.header_references["Datum"]] = date.today().strftime("%d.%m.%Y")
     
     # sheet is openpyxl worksheet
     def fill_worksheet(self, sheet, code_to_activity, additional_comments):
@@ -89,26 +90,26 @@ class Report:
         comments = self.get_comment_by_date(code_to_activity, additional_comments)
         for i in range(0, len(weekdays)):
             sheet.cell(
-                row=self.references["weekday"][0][0] + i,
-                column=self.references["weekday"][0][1],
+                row=self.references["weekday"][0] + i,
+                column=self.references["weekday"][1],
                 value=weekdays[i]
             )
             sheet.cell(
-                row=self.references["date"][0][0] + i,
-                column=self.references["date"][0][1],
+                row=self.references["date"][0] + i,
+                column=self.references["date"][1],
                 value=dates[i]
             )
             if dates[i] in hours.keys():
                 # same row as in dates can be used
                 sheet.cell(
-                    row=self.references["date"][0][0] + i,
-                    column=self.references["hours"][0][1],
+                    row=self.references["date"][0] + i,
+                    column=self.references["hours"][1],
                     value=hours.get(dates[i])
                 )
             if dates[i] in comments.keys():
                 # same row as in dates can be used
                 sheet.cell(
-                    row=self.references["date"][0][0] + i,
-                    column=self.references["description"][0][1],
+                    row=self.references["date"][0] + i,
+                    column=self.references["description"][1],
                     value=comments.get(dates[i])
                 )

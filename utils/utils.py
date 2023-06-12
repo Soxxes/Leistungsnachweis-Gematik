@@ -1,7 +1,7 @@
 import os
 import sys
 import openpyxl
-import json
+import yaml
 
 
 def create_folder(name, path_to_go=None):
@@ -19,9 +19,9 @@ def create_folder(name, path_to_go=None):
 def load_template(path, client, config):
     try:
         template = openpyxl.load_workbook(path)
-        skip_style = config.get(client).get("skip_style")
+        skip_style = config.get("Clients").get(client).get("skip_style")
         if not skip_style:
-            template_sheet = template[config.get(client).get("template_sheet_name")]
+            template_sheet = template[config.get("Clients").get(client).get("template_sheet_name")]
         else:
             template_sheet = None
         return template, template_sheet, skip_style
@@ -33,8 +33,8 @@ def load_template(path, client, config):
 
 def load_config(path):
     try:
-        with open(path, "r") as file:
-            config = json.load(file)
+        with open(path, "r") as ymlfile:
+            config = yaml.load(ymlfile, Loader=yaml.SafeLoader)
         return config
     except FileNotFoundError:
         print("[ERROR] Missing config file in template folder.")

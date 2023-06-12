@@ -65,7 +65,7 @@ def handle_failed_input():
     sys.exit()
 
 def select_client(config: dict):
-    clients = list(config.keys())
+    clients = list(config.get("Clients").keys())
     client_map = {i: dirname for i, dirname in enumerate(clients, 1)}
     print(f"Found {len(clients)} clients in config file.")
     for i, client in client_map.items():
@@ -87,4 +87,5 @@ def select_client(config: dict):
         input("Received three invalid inputs. Script termintates. Please press any key ...")
         sys.exit()
 
-    return client
+    client_info = config.get("Clients").get(client)
+    return client, client_info
