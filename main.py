@@ -6,10 +6,9 @@ import string
 import locale
 
 import openpyxl
-import pandas as pd
 
 from utils.interactive import get_input, handle_failed_input, select_client
-from utils.preprocessing import prepare_df, clean_name
+from utils.preprocessing import prepare_df, clean_name, merge_groups
 from utils.report import ClientReport1, ClientReport2
 from utils.style import adjust_cell_dimensions, copy_cell_styles, merge_cells
 from utils.validation import validate_input_file
@@ -106,6 +105,7 @@ if __name__ == "__main__":
 
                         employee_groups = month_group.groupby(month_group["Last Name"])
                         # employee level (excel sheet in the file)
+                        # creates report for every employee
                         for employee, employee_group in employee_groups:
                             first_name = employee_group["First Name"].values[0]
                             employee_sheet = month_excel.create_sheet(f"{first_name} {employee}")
@@ -140,22 +140,11 @@ if __name__ == "__main__":
                 wbs_group.dropna(subset=["Task Name"], inplace=True)
 
                 task_name_groups = wbs_group.groupby(wbs_group["Task Name"])
-                merged_groups = {}
-                for task_name, task_name_group in task_name_groups:
-                    task_name = task_name.split()[0]
-                    if task_name in client_info.get("additional_tasks").keys():
-                        task_name = client_info.get("additional_tasks").get(task_name)
-                    if merged_groups.get(task_name) is None:
-                        merged_groups[task_name] = []
-                    merged_groups[task_name].append(task_name_group)
-                        
-                # groups is list of groups and will be replaced by one merged group for
-                # the corresponding mapped task
-                for task_name, groups in merged_groups.items():
-                    task_name_group = pd.concat(groups)
-                    task_name_group.sort_values("Entry Date", inplace=True)
-                    merged_groups[task_name] = task_name_group
+                # some tasks belong together, merge them and sort by date before
+                # creating the report
+                merged_groups = merge_groups(task_name_groups, client_info)
 
+                # create report for every task
                 for task_name, task_name_group in merged_groups.items():
                     task_sheet = output_excel[task_name]
                     report = ClientReport2(task_name_group,

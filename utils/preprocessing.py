@@ -20,3 +20,22 @@ def clean_name(name):
         if char in forbidden:
             new_name = new_name.replace(char, "-")
     return new_name
+
+def merge_groups(groups, client_info) -> dict:
+    merged_groups = {}
+    for task_name, task_name_group in groups:
+        task_name = task_name.split()[0]
+        if task_name in client_info.get("additional_tasks").keys():
+            task_name = client_info.get("additional_tasks").get(task_name)
+        if merged_groups.get(task_name) is None:
+            merged_groups[task_name] = []
+        merged_groups[task_name].append(task_name_group)
+            
+    # groups is list of groups and will be replaced by one merged group for
+    # the corresponding mapped task
+    for task_name, groups in merged_groups.items():
+        task_name_group = pd.concat(groups)
+        task_name_group.sort_values("Entry Date", inplace=True)
+        merged_groups[task_name] = task_name_group
+
+    return merged_groups
