@@ -26,7 +26,7 @@ class Report(ABC):
         pass
 
 
-class ClientReport1:
+class ClientReport1(Report):
 
     def __init__(self,
                  group: pd.DataFrame,
@@ -36,7 +36,8 @@ class ClientReport1:
                  project_name: str,
                  references: dict,
                  header_references: dict):
-        super(Report, self).__init__(group)
+        super().__init__(group)
+        
         self.month = month
         self.year = year
         self.employee_name = employee_name
@@ -162,6 +163,8 @@ class ClientReport2(Report):
         sheet[ref] = self.group["Hours"].sum()
 
     def fill_worksheet(self, sheet, code_to_activity, additional_comments) -> None:
+        # delete ugly formatting from excel sheet, start at 2 to keep header
+        sheet.delete_rows(2, sheet.max_row)
         for _, row in self.group.iterrows():
             date = row["Entry Date"]
             employee_name = row["First Name"] + " " + row["Last Name"]
@@ -183,3 +186,4 @@ class ClientReport2(Report):
                     comment = activity
                 break
         return comment
+    
