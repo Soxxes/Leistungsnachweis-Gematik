@@ -15,7 +15,7 @@ from utils.preprocessing import prepare_df, clean_name, merge_groups
 from utils.report import ClientReport1, ClientReport2
 from utils.style import adjust_cell_dimensions, copy_cell_styles, merge_cells
 from utils.validation import validate_input_file
-from utils.utils import create_folder, load_template, load_config
+from utils.file_handling import create_folder, load_template, load_config
 
 
 # to get dates and times in German format
@@ -33,7 +33,7 @@ os.makedirs(logs_dir, exist_ok=True)
 
 log_file = os.path.join(logs_dir, "log_file.log")
 logging.basicConfig(level=log_level, format="%(asctime)s [%(levelname)s] %(message)s",
-                    filename=log_file)
+                    filename=log_file, force=True)
 logging.info("Execution started.")
 
 CODE_TO_ACTIVITY = {
