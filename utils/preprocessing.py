@@ -18,7 +18,7 @@ def prepare_df(file):
     # transform to real datetime object
     df["Entry Date"] = df["Entry Date"].apply(lambda x: pd.to_datetime(x, format="%Y-%m-%d"))
 
-    assert(len(df) != 0, "created DataFrame is empty")
+    assert len(df) != 0, "created DataFrame is empty"
     logging.info("Successfully prepared dataframe.")
     return df
 
@@ -26,9 +26,10 @@ def prepare_df(file):
 def clean_name(name):
     new_name = name
     forbidden = ["/", "\\", ":", "*", "\"", "?", "<", ">", "|"]
-    for char in name:
-        if char in forbidden:
-            new_name = new_name.replace(char, "-")
+    if isinstance(name, str):
+        for char in name:
+            if char in forbidden:
+                new_name = new_name.replace(char, "-")
     return new_name
 
 
