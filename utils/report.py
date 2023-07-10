@@ -90,7 +90,7 @@ class ClientReport1(Report):
         d = {}
         for _, row in self.group.iterrows():
             date = row["Entry Date"].to_pydatetime().strftime("%d.%m.%Y")
-            comment = row["Comments"]
+            comment = str(row["Comments"])
             if not comment:
                 continue
             for code, activity in code_to_activity.items():
