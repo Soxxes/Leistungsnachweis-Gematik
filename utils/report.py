@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 
 import pandas as pd
 
+from utils.utils import add_logging
+
 """
 IMPORTANT:
 since there must not be any information about a client, I use a mapping
@@ -106,6 +108,7 @@ class ClientReport1(Report):
         return d
     
     # sheet is openpyxl worksheet
+    @add_logging
     def fill_header(self, sheet):
         if self.header_references is not None:
             sheet[self.header_references["Mitarbeiter"]] = self.employee_name
@@ -114,6 +117,7 @@ class ClientReport1(Report):
             sheet[self.header_references["Datum"]] = date.today().strftime("%d.%m.%Y")
     
     # sheet is openpyxl worksheet
+    @add_logging
     def fill_worksheet(self, sheet, code_to_activity, additional_comments):
         weekdays, dates = self.get_weekdays_to_dates()
         hours = self.get_hours_by_date()
@@ -158,10 +162,12 @@ class ClientReport2(Report):
         self.grades = grades
         self.header_references = header_references
 
+    @add_logging
     def fill_header(self, sheet) -> None:
         ref = self.header_references[self.task_name]
         sheet[ref] = self.group["Hours"].sum()
 
+    @add_logging
     def fill_worksheet(self, sheet, code_to_activity, additional_comments) -> None:
         # delete ugly formatting from excel sheet, start at 2 to keep header
         sheet.delete_rows(2, sheet.max_row)
