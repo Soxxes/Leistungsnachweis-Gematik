@@ -173,7 +173,7 @@ class ClientReport2(Report):
         sheet.delete_rows(2, sheet.max_row)
         for _, row in self.group.iterrows():
             date = row["Entry Date"]
-            employee_name = row["First Name"] + " " + row["Last Name"]
+            employee_name = row["First Name"].strip() + " " + row["Last Name"].strip()
             grade = self.grades[employee_name]
             hours = row["Hours"]
 
@@ -184,6 +184,11 @@ class ClientReport2(Report):
 
     def _get_comment(self, raw_comment, code_to_activity, additional_comments) -> str:
         comment = raw_comment
+        # someone wrote 1, 2, 5, etc. instead of 001, 002, 005
+        if isinstance(comment, int):
+            comment = "00" + str(comment)
+        elif pd.isna(comment):
+            comment = "MISSING COMMENT"
         for code, activity in code_to_activity.items():
             if code in comment:
                 # only if the code is not in the additional comments list
