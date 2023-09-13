@@ -160,7 +160,9 @@ if __name__ == "__main__":
                     task_name_groups = wbs_group.groupby(wbs_group["Task Name"])
                     # some tasks belong together, merge them and sort by date before
                     # creating the report
-                    merged_groups = merge_groups(task_name_groups, client_info)
+                    merged_groups = merge_groups(task_name_groups,
+                                                client_info,
+                                                long_task_name=True)
 
                     # create report for every task
                     for task_name, task_name_group in merged_groups.items():
@@ -174,6 +176,38 @@ if __name__ == "__main__":
                     
                     output_excel.save(f"{client}_Stundenaufstellung.xlsx")
                     # -- END CLIENT 2 --
+
+                    # -- START CLIENT 3 --
+                elif client_info.get("id") == 3:
+                    shutil.copy(os.path.join(cwd,
+                                            "Template", f"template_{client}.xlsx"),
+                                            f"{client}_Stundenaufstellung.xlsx")
+                    output_excel = openpyxl.load_workbook(f"{client}_Stundenaufstellung.xlsx")
+                    
+                    no_tasks = wbs_group[pd.isna(wbs_group["Task Name"])]
+                    handle_no_tasks(no_tasks)
+
+                    wbs_group.dropna(subset=["Task Name"], inplace=True)
+
+                    task_name_groups = wbs_group.groupby(wbs_group["Task Name"])
+                    # some tasks belong together, merge them and sort by date before
+                    # creating the report             
+                    merged_groups = merge_groups(task_name_groups,
+                                                client_info,
+                                                long_task_name=False)
+
+                    # create report for every task
+                    for task_name, task_name_group in merged_groups.items():
+                        task_sheet = output_excel[task_name]
+                        report = ClientReport2(task_name_group,
+                                            task_name=task_name,
+                                            grades=config.get("Grades"),
+                                            header_references=client_info.get("header_references"))
+                        report.fill_worksheet(task_sheet, CODE_TO_ACTIVITY, ADDITIONAL_COMMENTS)
+                        report.fill_header(output_excel["Uebersicht"])
+                    
+                    output_excel.save(f"{client}_Stundenaufstellung.xlsx")
+                    # -- END CLIENT 3 --
 
             os.chdir("..")
             print(f"Progress: {round((i/len(client_groups))*100, 2)} %", end="\r")
