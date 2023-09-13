@@ -6,7 +6,7 @@ import sys
 def add_logging(func):
     def create_logs(*args, **kwargs):
         try:
-            res = func(*args, *kwargs)
+            res = func(*args, **kwargs)
             logging.info(f"Successfully ran function {func.__name__} with arguments: {args, kwargs}")
             return res
         except Exception as e:
