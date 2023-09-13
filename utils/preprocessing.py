@@ -39,10 +39,14 @@ def clean_name(name):
 
 
 @add_logging
-def merge_groups(groups, client_info) -> dict:
+def merge_groups(groups, client_info, long_task_name=True) -> dict:
     merged_groups = {}
     for task_name, task_name_group in groups:
-        task_name = task_name.split()[0]
+        # some task names contain the WorkItem, which is not necessary
+        # for those one can split the long task name and only use the first part
+        if long_task_name:
+            task_name = task_name.split()[0]
+        task_name = task_name.strip()
         if task_name in client_info.get("additional_tasks").keys():
             task_name = client_info.get("additional_tasks").get(task_name)
         if merged_groups.get(task_name) is None:
